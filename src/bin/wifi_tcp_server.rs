@@ -16,7 +16,7 @@ use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_net::tcp::TcpSocket;
-use embassy_net::{Config, StackResources};
+use embassy_net::{Config, StackResources, Ipv4Address, Stack};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
@@ -28,12 +28,16 @@ use rand::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
-include!(concat!(env!("CARGO_MANIFEST_DIR"), "/.secrets/wifi_config.rs"));
+use AORW::solvers;
+
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/.secrets/wifi_config.rs"
+));
 
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
 });
-
 
 #[embassy_executor::task]
 async fn cyw43_task(
@@ -84,11 +88,20 @@ async fn main(spawner: Spawner) {
     unwrap!(spawner.spawn(cyw43_task(runner)));
 
     control.init(clm).await;
+    control.leave().await;
     control
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
         .await;
 
     let config = Config::dhcpv4(Default::default());
+    test28.set_low();
+    test27.set_low();
+    test26.set_low();
+    test22.set_low();
+    test21.set_low();
+    test20.set_low();
+    test19.set_low();
+    test18.set_low();
 
     // Generate random seed
     let seed = rng.next_u64();
@@ -103,6 +116,7 @@ async fn main(spawner: Spawner) {
     );
 
     unwrap!(spawner.spawn(net_task(runner)));
+
 
     loop {
         control.gpio_set(0, true).await;
@@ -121,9 +135,10 @@ async fn main(spawner: Spawner) {
     // Wait for DHCP, not necessary when using static IP
     info!("waiting for DHCP...");
     while !stack.is_config_up() {
-        Timer::after_millis(100).await;
+        Timer::after_millis(1000).await;
     }
-    info!("DHCP is now up!");
+    info!("DHCP is now up! ip addr {}", stack.config_v4().unwrap().address);
+    
 
     // And now we can use it!
 
@@ -131,12 +146,12 @@ async fn main(spawner: Spawner) {
     let mut tx_buffer = [0; 4096];
     let mut buf = [0; 4096];
 
-    const MAX_LINES: usize = 300;
-    const MAX_CHARS: usize = 100;
+    const MAX_LINES: usize = 2000;
+    const MAX_CHARS: usize = 8;
 
     // Define the Vec with explicit capacity
-let mut input_lines: Vec<[u8; MAX_CHARS], MAX_LINES> = Vec::new();
-let mut received = 0;
+    let mut input_lines: Vec<[u8; MAX_CHARS], MAX_LINES> = Vec::new();
+    let mut received = 0;
     let mut state = InputState::WaitingForStart;
     let mut line_count = 0;
 
@@ -155,7 +170,6 @@ let mut received = 0;
         let mut phase = Phase::Input;
         control.gpio_set(0, true).await; // LED On for active
 
-        let mut input_lines = Vec::new();
         let mut buf = [0; 4096];
 
         loop {
@@ -187,7 +201,7 @@ let mut received = 0;
                             line_count = count;
                             info!("Expecting {} lines.", count);
                             state = InputState::ReceivingLines {
-                                expected_lines: count
+                                expected_lines: count,
                             };
                         } else {
                             warn!("Too many lines requested: {}", count);
@@ -196,28 +210,27 @@ let mut received = 0;
                         warn!("Invalid line count: {}", command);
                     }
                 }
-                InputState::ReceivingLines {
-                    expected_lines
-                } => {
+                InputState::ReceivingLines { expected_lines } => {
                     if received < expected_lines {
                         let mut buffer = [0u8; MAX_CHARS];
                         let bytes = command.as_bytes();
                         if bytes.len() <= MAX_CHARS {
                             buffer[..bytes.len()].copy_from_slice(bytes);
-                            received += 1;
-                            input_lines[received] = buffer;
-                            info!(
-                                "Received line {}/{}: {}",
-                                received + 1,
-                                expected_lines,
-                                command
-                            );
+                            if input_lines.push(buffer).is_err() {
+                                warn!("Failed to store input line: Vec capacity exceeded");
+                            } else {
+                                info!(
+                                    "Received line {}/{}: {}",
+                                    received+1, // Increment after successfully pushing
+                                    expected_lines,
+                                    command
+                                );
+                                received += 1;
+                            }
 
-                            state = InputState::ReceivingLines {
-                                expected_lines
-                            };
+                            state = InputState::ReceivingLines { expected_lines };
 
-                            if received + 1 == expected_lines {
+                            if received == expected_lines {
                                 info!("All lines received. Ready to process.");
                                 state = InputState::ReadyToProcess;
                             }
@@ -235,8 +248,8 @@ let mut received = 0;
                         if let Err(e) = socket.write_all(result.as_bytes()).await {
                             warn!("write error: {:?}", e);
                         }
-
-                        state = InputState::WaitingForStart; // Reset for new session
+                        state = InputState::WaitingForStart; // Reset for new session]
+                        received = 0;
                     } else {
                         warn!("Unexpected command: {}", command);
                     }
@@ -244,21 +257,18 @@ let mut received = 0;
             }
         }
     }
-    fn process_input(input_lines: &Vec<[u8; MAX_CHARS], MAX_LINES>, line_count: usize) -> String<256> {
-        use core::fmt::Write;
-    
-        const MAX_RESULT_LEN: usize = 256;
-        let mut result: String<MAX_RESULT_LEN> = String::new();
-    
-        for i in 0..line_count {
-            let line = core::str::from_utf8(&input_lines[i]).unwrap_or("[Invalid UTF-8]");
-            writeln!(result, "Line {}: {}", i + 1, line).unwrap();
-        }
-    
-        result
+    use AORW::solvers::AOCTEST; // Import the day01 module
+
+    fn process_input(
+        input_lines: &Vec<[u8; MAX_CHARS], MAX_LINES>,
+        line_count: usize,
+    ) -> String<256> {
+        // Delegate to day01's solve function
+        AOCTEST::solve(input_lines, line_count)
     }
-    
 }
+
+
 enum Phase {
     Input,
     Process,
@@ -267,8 +277,7 @@ enum Phase {
 enum InputState {
     WaitingForStart,
     WaitingForLineCount,
-    ReceivingLines {
-        expected_lines: usize
-    },
+    ReceivingLines { expected_lines: usize },
     ReadyToProcess,
 }
+
