@@ -4,10 +4,7 @@
 #![no_std]
 #![no_main]
 #![allow(async_fn_in_trait)]
-
 use core::str::from_utf8;
-
-use core::fmt::Write as corewt;
 use heapless::String;
 use heapless::Vec;
 
@@ -16,7 +13,7 @@ use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_net::tcp::TcpSocket;
-use embassy_net::{Config, StackResources, Ipv4Address, Stack};
+use embassy_net::{Config, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
@@ -117,7 +114,6 @@ async fn main(spawner: Spawner) {
 
     unwrap!(spawner.spawn(net_task(runner)));
 
-
     loop {
         control.gpio_set(0, true).await;
         match control
@@ -135,10 +131,24 @@ async fn main(spawner: Spawner) {
     // Wait for DHCP, not necessary when using static IP
     info!("waiting for DHCP...");
     while !stack.is_config_up() {
-        Timer::after_millis(1000).await;
+        Timer::after_millis(100).await;
     }
-    info!("DHCP is now up! ip addr {}", stack.config_v4().unwrap().address);
-    
+    info!("DHCP is now up!");
+
+    info!("waiting for link up...");
+    while !stack.is_link_up() {
+        Timer::after_millis(500).await;
+    }
+    info!("Link is up!");
+
+    info!("waiting for stack to be up...");
+    stack.wait_config_up().await;
+    info!("Stack is up!");
+
+    info!(
+        "DHCP is now up! ip addr {}",
+        stack.config_v4().unwrap().address
+    );
 
     // And now we can use it!
 
@@ -165,7 +175,6 @@ async fn main(spawner: Spawner) {
             warn!("accept error: {:?}", e);
             continue;
         }
-
         info!("Received connection from {:?}", socket.remote_endpoint());
         let mut phase = Phase::Input;
         control.gpio_set(0, true).await; // LED On for active
@@ -188,9 +197,26 @@ async fn main(spawner: Spawner) {
             let command = from_utf8(&buf[..n]).unwrap().trim();
             match state {
                 InputState::WaitingForStart => {
-                    if command == "Start" {
-                        info!("Received Start command. Ready for line count.");
-                        state = InputState::WaitingForLineCount;
+                    if let Some(size_str) = command.strip_prefix("Start ") {
+                        if let Ok(size) = size_str.parse::<usize>() {
+                            if size <= MAX_LINES * MAX_CHARS {
+                                info!("Negotiated size: {} bytes. Ready for data.", size);
+                                line_count = size;
+                                let mut reply: heapless::String<32> = heapless::String::new();
+                                core::fmt::Write::write_fmt(&mut reply, format_args!("ACK {}\n", size)).unwrap();
+                                socket.write_all(reply.as_bytes()).await.unwrap();
+                                state = InputState::ReceivingLines {
+                                    expected_lines: size / MAX_CHARS,
+                                };
+                            } else {
+                                warn!("Size too large: {}", size);
+                                socket.write_all(b"ERROR Size too large\n").await.unwrap();
+                                state = InputState::WaitingForStart;
+                            }
+                        } else {
+                            warn!("Invalid Start size: {}", command);
+                            socket.write_all(b"ERROR Invalid size\n").await.unwrap();
+                        }
                     } else {
                         warn!("Unexpected command: {}", command);
                     }
@@ -221,7 +247,7 @@ async fn main(spawner: Spawner) {
                             } else {
                                 info!(
                                     "Received line {}/{}: {}",
-                                    received+1, // Increment after successfully pushing
+                                    received + 1, // Increment after successfully pushing
                                     expected_lines,
                                     command
                                 );
@@ -235,6 +261,9 @@ async fn main(spawner: Spawner) {
                                 state = InputState::ReadyToProcess;
                             }
                         } else {
+                            //log the line
+                            let command = from_utf8(&buf[..n]).unwrap().trim();
+                            info!("{}", command);
                             warn!("Line too long, skipping!");
                         }
                     }
@@ -268,7 +297,6 @@ async fn main(spawner: Spawner) {
     }
 }
 
-
 enum Phase {
     Input,
     Process,
@@ -280,4 +308,3 @@ enum InputState {
     ReceivingLines { expected_lines: usize },
     ReadyToProcess,
 }
-
