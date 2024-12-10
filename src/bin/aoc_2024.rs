@@ -1,9 +1,11 @@
-//! This example uses the RP Pico W board Wifi chip (cyw43).
-//! Connects to specified Wifi network and creates a TCP endpoint on port 1234.
-
 #![no_std]
 #![no_main]
 #![allow(async_fn_in_trait)]
+
+use advent_of_rust_pico_w::aoc2024::day01::Day01;
+use advent_of_rust_pico_w::aoc2024::{day01, Solver};
+use advent_of_rust_pico_w::tcp_server::{self, TcpServer};
+
 use core::str::from_utf8;
 use heapless::String;
 use heapless::Vec;
@@ -26,6 +28,7 @@ use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
 use advent_of_rust_pico_w::solvers::AOCTEST;
+
 
 include!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -60,14 +63,6 @@ async fn main(spawner: Spawner) {
 
     let pwr = Output::new(p.PIN_23, Level::Low);
     let cs = Output::new(p.PIN_25, Level::High);
-    let mut test28 = Output::new(p.PIN_28, Level::High);
-    let mut test27 = Output::new(p.PIN_27, Level::High);
-    let mut test26 = Output::new(p.PIN_26, Level::High);
-    let mut test22 = Output::new(p.PIN_22, Level::High);
-    let mut test21 = Output::new(p.PIN_21, Level::High);
-    let mut test20 = Output::new(p.PIN_20, Level::High);
-    let mut test19 = Output::new(p.PIN_19, Level::High);
-    let mut test18 = Output::new(p.PIN_18, Level::High);
     let mut pio = Pio::new(p.PIO0, Irqs);
     let spi = PioSpi::new(
         &mut pio.common,
@@ -91,6 +86,15 @@ async fn main(spawner: Spawner) {
         .await;
 
     let config = Config::dhcpv4(Default::default());
+
+    let mut test28 = Output::new(p.PIN_28, Level::High);
+    let mut test27 = Output::new(p.PIN_27, Level::High);
+    let mut test26 = Output::new(p.PIN_26, Level::High);
+    let mut test22 = Output::new(p.PIN_22, Level::High);
+    let mut test21 = Output::new(p.PIN_21, Level::High);
+    let mut test20 = Output::new(p.PIN_20, Level::High);
+    let mut test19 = Output::new(p.PIN_19, Level::High);
+    let mut test18 = Output::new(p.PIN_18, Level::High);
     test28.set_low();
     test27.set_low();
     test26.set_low();
@@ -149,161 +153,28 @@ async fn main(spawner: Spawner) {
         "DHCP is now up! ip addr {}",
         stack.config_v4().unwrap().address
     );
-
-    // And now we can use it!
-
-    let mut rx_buffer = [0; 4096];
-    let mut tx_buffer = [0; 4096];
-    let mut buf = [0; 4096];
-
-    const MAX_LINES: usize = 2000;
-    const MAX_CHARS: usize = 8;
-
-    // Define the Vec with explicit capacity
-    let mut input_lines: Vec<[u8; MAX_CHARS], MAX_LINES> = Vec::new();
-    let mut received = 0;
-    let mut state = InputState::WaitingForStart;
-    let mut line_count = 0;
-
     loop {
-        let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
-        socket.set_timeout(Some(Duration::from_secs(10)));
-
-        control.gpio_set(0, false).await; // LED Off for waiting
-        info!("Listening on TCP:1234...");
-        if let Err(e) = socket.accept(1234).await {
-            warn!("accept error: {:?}", e);
-            continue;
+        let server = TcpServer::new(&stack);
+        if let Err(e) = server
+            .listen(1234, |input| {
+                info!("Handling input: {:?}", input);
+    
+                // Use the Day01 solver
+                let result = Day01::solve(input.clone());
+    
+                // Log and return the response
+                info!("Solver result: {:?}", result);
+                result
+            })
+            .await
+        {
+            warn!("Listener encountered an error: {:?}", e);
         }
-        info!("Received connection from {:?}", socket.remote_endpoint());
-        let mut phase = Phase::Input;
-        control.gpio_set(0, true).await; // LED On for active
-
-        let mut buf = [0; 4096];
-
-        loop {
-            let n = match socket.read(&mut buf).await {
-                Ok(0) => {
-                    warn!("read EOF");
-                    break;
-                }
-                Ok(n) => n,
-                Err(e) => {
-                    warn!("read error: {:?}", e);
-                    break;
-                }
-            };
-
-            let command = from_utf8(&buf[..n]).unwrap().trim();
-            match state {
-                InputState::WaitingForStart => {
-                    if let Some(size_str) = command.strip_prefix("Start ") {
-                        if let Ok(size) = size_str.parse::<usize>() {
-                            if size <= MAX_LINES * MAX_CHARS {
-                                info!("Negotiated size: {} bytes. Ready for data.", size);
-                                line_count = size;
-                                let mut reply: heapless::String<32> = heapless::String::new();
-                                core::fmt::Write::write_fmt(&mut reply, format_args!("ACK {}\n", size)).unwrap();
-                                socket.write_all(reply.as_bytes()).await.unwrap();
-                                state = InputState::ReceivingLines {
-                                    expected_lines: size / MAX_CHARS,
-                                };
-                            } else {
-                                warn!("Size too large: {}", size);
-                                socket.write_all(b"ERROR Size too large\n").await.unwrap();
-                                state = InputState::WaitingForStart;
-                            }
-                        } else {
-                            warn!("Invalid Start size: {}", command);
-                            socket.write_all(b"ERROR Invalid size\n").await.unwrap();
-                        }
-                    } else {
-                        warn!("Unexpected command: {}", command);
-                    }
-                }
-                InputState::WaitingForLineCount => {
-                    if let Ok(count) = command.parse::<usize>() {
-                        if count <= MAX_LINES {
-                            line_count = count;
-                            info!("Expecting {} lines.", count);
-                            state = InputState::ReceivingLines {
-                                expected_lines: count,
-                            };
-                        } else {
-                            warn!("Too many lines requested: {}", count);
-                        }
-                    } else {
-                        warn!("Invalid line count: {}", command);
-                    }
-                }
-                InputState::ReceivingLines { expected_lines } => {
-                    if received < expected_lines {
-                        let mut buffer = [0u8; MAX_CHARS];
-                        let bytes = command.as_bytes();
-                        if bytes.len() <= MAX_CHARS {
-                            buffer[..bytes.len()].copy_from_slice(bytes);
-                            if input_lines.push(buffer).is_err() {
-                                warn!("Failed to store input line: Vec capacity exceeded");
-                            } else {
-                                info!(
-                                    "Received line {}/{}: {}",
-                                    received + 1, // Increment after successfully pushing
-                                    expected_lines,
-                                    command
-                                );
-                                received += 1;
-                            }
-
-                            state = InputState::ReceivingLines { expected_lines };
-
-                            if received == expected_lines {
-                                info!("All lines received. Ready to process.");
-                                state = InputState::ReadyToProcess;
-                            }
-                        } else {
-                            //log the line
-                            let command = from_utf8(&buf[..n]).unwrap().trim();
-                            info!("{}", command);
-                            warn!("Line too long, skipping!");
-                        }
-                    }
-                }
-                InputState::ReadyToProcess => {
-                    if command == "GO" {
-                        info!("Processing input...");
-                        let result = process_input(&input_lines, line_count);
-
-                        // Respond with the result
-                        if let Err(e) = socket.write_all(result.as_bytes()).await {
-                            warn!("write error: {:?}", e);
-                        }
-                        state = InputState::WaitingForStart; // Reset for new session]
-                        received = 0;
-                    } else {
-                        warn!("Unexpected command: {}", command);
-                    }
-                }
-            }
-        }
+    
+        // Add a small delay to avoid rapid retries in case of persistent errors
+        embassy_time::Timer::after(Duration::from_secs(1)).await;
+    
+        info!("Restarting listener...");
     }
-
-    fn process_input(
-        input_lines: &Vec<[u8; MAX_CHARS], MAX_LINES>,
-        line_count: usize,
-    ) -> String<256> {
-        // Delegate to day01's solve function
-        AOCTEST::solve(input_lines, line_count)
-    }
-}
-
-enum Phase {
-    Input,
-    Process,
-    Result,
-}
-enum InputState {
-    WaitingForStart,
-    WaitingForLineCount,
-    ReceivingLines { expected_lines: usize },
-    ReadyToProcess,
+    
 }
