@@ -86,7 +86,7 @@ impl<'a> TcpServer<'a> {
                     info!("Received {}/{} bytes.", total_received, expected_length);
                 }
     
-                info!("Complete message received: {:?}", accumulated_data);
+                // info!("Complete message received: {:?}", accumulated_data); //this is a dangerous line when sending large data
     
                 let response = handler(&accumulated_data);
     

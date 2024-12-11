@@ -25,7 +25,6 @@ use rand::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
-use advent_of_rust_pico_w::solvers::AOCTEST;
 
 include!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -292,7 +291,8 @@ async fn main(spawner: Spawner) {
         line_count: usize,
     ) -> String<256> {
         // Delegate to day01's solve function
-        AOCTEST::solve(input_lines, line_count)
+        let mut input = String::<256>::new();
+        input
     }
 }
 

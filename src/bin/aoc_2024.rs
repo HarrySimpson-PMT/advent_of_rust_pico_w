@@ -3,18 +3,14 @@
 #![allow(async_fn_in_trait)]
 
 use advent_of_rust_pico_w::aoc2024::day01::Day01;
-use advent_of_rust_pico_w::aoc2024::{day01, Solver};
-use advent_of_rust_pico_w::tcp_server::{self, TcpServer};
+use advent_of_rust_pico_w::aoc2024::Solver;
+use advent_of_rust_pico_w::tcp_server::TcpServer;
 
-use core::str::from_utf8;
-use heapless::String;
-use heapless::Vec;
 
 use cyw43::JoinOptions;
 use cyw43_pio::PioSpi;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_net::tcp::TcpSocket;
 use embassy_net::{Config, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
@@ -22,13 +18,9 @@ use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_time::{Duration, Timer};
-use embedded_io_async::Write;
 use rand::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
-
-use advent_of_rust_pico_w::solvers::AOCTEST;
-
 
 include!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -56,6 +48,15 @@ async fn main(spawner: Spawner) {
     info!("Hello World!");
 
     let p = embassy_rp::init(Default::default());
+    let mut test28 = Output::new(p.PIN_28, Level::High);
+    let mut test27 = Output::new(p.PIN_27, Level::High);
+    let mut test26 = Output::new(p.PIN_26, Level::High);
+    let mut test22 = Output::new(p.PIN_22, Level::High);
+    let mut test21 = Output::new(p.PIN_21, Level::High);
+    let mut test20 = Output::new(p.PIN_20, Level::High);
+    let mut test19 = Output::new(p.PIN_19, Level::High);
+    let mut test18 = Output::new(p.PIN_18, Level::High);
+
     let mut rng = RoscRng;
 
     let fw = include_bytes!("../../firmware/43439A0.bin");
@@ -87,14 +88,7 @@ async fn main(spawner: Spawner) {
 
     let config = Config::dhcpv4(Default::default());
 
-    let mut test28 = Output::new(p.PIN_28, Level::High);
-    let mut test27 = Output::new(p.PIN_27, Level::High);
-    let mut test26 = Output::new(p.PIN_26, Level::High);
-    let mut test22 = Output::new(p.PIN_22, Level::High);
-    let mut test21 = Output::new(p.PIN_21, Level::High);
-    let mut test20 = Output::new(p.PIN_20, Level::High);
-    let mut test19 = Output::new(p.PIN_19, Level::High);
-    let mut test18 = Output::new(p.PIN_18, Level::High);
+
     test28.set_low();
     test27.set_low();
     test26.set_low();
@@ -137,22 +131,37 @@ async fn main(spawner: Spawner) {
     while !stack.is_config_up() {
         Timer::after_millis(100).await;
     }
+    test28.set_high();    
     info!("DHCP is now up!");
-
+    
     info!("waiting for link up...");
     while !stack.is_link_up() {
         Timer::after_millis(500).await;
     }
+    test27.set_high();
     info!("Link is up!");
-
+    
     info!("waiting for stack to be up...");
     stack.wait_config_up().await;
+    test26.set_high();
     info!("Stack is up!");
 
     info!(
         "DHCP is now up! ip addr {}",
         stack.config_v4().unwrap().address
     );
+    test22.set_high();
+    //wait 2 seconds
+    Timer::after(Duration::from_secs(1)).await;
+    test28.set_low();
+    test27.set_low();
+    test26.set_low();
+    test22.set_low();
+    test21.set_low();
+    test20.set_low();
+    test19.set_low();
+    test18.set_low();
+  
     loop {
         let server = TcpServer::new(&stack);
         if let Err(e) = server
@@ -175,6 +184,5 @@ async fn main(spawner: Spawner) {
         embassy_time::Timer::after(Duration::from_secs(1)).await;
     
         info!("Restarting listener...");
-    }
-    
+    }    
 }
