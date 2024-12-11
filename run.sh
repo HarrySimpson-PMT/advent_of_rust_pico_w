@@ -1,6 +1,10 @@
 #!/bin/bash
 trap 'exit' INT
 
+cargo build
+
+clear
+
 # Run the code on the board
 probe-rs reset --chip rp2040 --protocol swd
 

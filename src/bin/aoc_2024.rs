@@ -169,7 +169,7 @@ async fn main(spawner: Spawner) {
                 info!("Handling input: {:?}", input);
     
                 // Use the Day01 solver
-                let result = Day01::solve(input.clone());
+                let result = Day01::solve(&input);
     
                 // Log and return the response
                 info!("Solver result: {:?}", result);
