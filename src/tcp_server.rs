@@ -87,6 +87,20 @@ impl<'a> TcpServer<'a> {
                 }    
     
                 let response = handler(&accumulated_data);
+                //write response
+
+                match socket.write_all(response.as_bytes()).await {
+                    Ok(()) => {
+                        socket.flush().await.map_err(|e| {
+                            warn!("flush error: {:?}", e);
+                            "Error flushing response"
+                        })?;
+                    }
+                    Err(e) => {
+                        warn!("write error: {:?}", e);
+                        return Err("Error writing response");
+                    }
+                };
     
                 if let Err(e) = socket.write_all(response.as_bytes()).await {
                     warn!("write error: {:?}", e);

@@ -4,6 +4,11 @@
 #![no_std]
 #![no_main]
 #![allow(async_fn_in_trait)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_mut)]
+
+
 use core::str::from_utf8;
 use heapless::String;
 use heapless::Vec;
@@ -153,7 +158,6 @@ async fn main(spawner: Spawner) {
 
     let mut rx_buffer = [0; 4096];
     let mut tx_buffer = [0; 4096];
-    let mut buf = [0; 4096];
 
     const MAX_LINES: usize = 2000;
     const MAX_CHARS: usize = 8;
@@ -175,7 +179,7 @@ async fn main(spawner: Spawner) {
             continue;
         }
         info!("Received connection from {:?}", socket.remote_endpoint());
-        let mut phase = Phase::Input;
+        let mut _phase = Phase::Input;
         control.gpio_set(0, true).await; // LED On for active
 
         let mut buf = [0; 4096];
@@ -287,8 +291,8 @@ async fn main(spawner: Spawner) {
     }
 
     fn process_input(
-        input_lines: &Vec<[u8; MAX_CHARS], MAX_LINES>,
-        line_count: usize,
+        _input_lines: &Vec<[u8; MAX_CHARS], MAX_LINES>,
+        _line_count: usize,
     ) -> String<256> {
         // Delegate to day01's solve function
         let mut input = String::<256>::new();

@@ -1,6 +1,7 @@
 use super::Solver;
-use defmt::println;
-use heapless::{String, Vec}; // U128 for the Vec capacity
+use heapless::{String, Vec};
+use heapless::binary_heap::{BinaryHeap, Min};
+use heapless::FnvIndexMap;
 
 pub struct Day01;
 
@@ -13,9 +14,11 @@ impl Solver for Day01 {
             return output;
         }
 
-        // Priority queues using heapless Vec
-        let mut pq1: Vec<i32, 1000> = Vec::new(); // Priority queue for first numbers
-        let mut pq2: Vec<i32, 1000> = Vec::new(); // Priority queue for second numbers
+        let mut pq1: BinaryHeap<i32, Min, 1000> = BinaryHeap::new(); 
+        let mut pq2: BinaryHeap<i32,Min, 1000> = BinaryHeap::new();
+        let mut first_numbers: Vec<i32, 1000> = Vec::new();
+        let mut second_number_counts: FnvIndexMap<i32, i32, 1024> = FnvIndexMap::new();
+
 
         // Split input into lines
         let lines: Vec<&str, 1000> = input.split('\n').collect();
@@ -24,8 +27,14 @@ impl Solver for Day01 {
             let parts: Vec<&str, 5> = line.split_whitespace().collect();
             if let (Some(&num1_str), Some(&num2_str)) = (parts.get(0), parts.get(1)) {
                 if let (Ok(num1), Ok(num2)) = (num1_str.parse::<i32>(), num2_str.parse::<i32>()) {
-                    pq1.push(num1).ok(); // Push into priority queue
+                    pq1.push(num1).ok();
                     pq2.push(num2).ok();
+                    first_numbers.push(num1).ok();
+                    if second_number_counts.contains_key(&num2) {
+                        *second_number_counts.get_mut(&num2).unwrap() += 1;
+                    } else {
+                        let _ = second_number_counts.insert(num2, 1);
+                    }
                 } else {
                     defmt::warn!("Error parsing numbers in line: {}", line);
                 }
@@ -33,32 +42,48 @@ impl Solver for Day01 {
                 defmt::warn!("Error splitting line: {}", line);
             }
         }
-
-        // Calculate the total sum of absolute differences
-        let total_diff = calculate_sum_of_abs_differences(&pq1, &pq2);
+        let total_diff = calculate_sum_of_abs_differences(&mut pq1, &mut pq2);
         use core::fmt::Write;
-        // Write the result into the output
-        if output.push_str("Total: ").is_ok() {
-            if write!(output, "{}", total_diff).is_ok() {
-                return output;
+
+
+
+        let mut total: u64 = 0;
+
+        // Calculate the total
+        for &item in &first_numbers {
+            if let Some(&count) = second_number_counts.get(&item) {
+                total += (item as u64) * (count as u64);
             }
         }
+
+
+        if output.push_str("Part A: ").is_ok() {
+            if write!(output, "{} ", total_diff).is_ok() {
+            }
+        }        
         else {
             output.clear();
-            output.push_str("Error: Output overflow").ok();
+            output.push_str("Part A: Error ").ok();
+        }
+        if output.push_str("Part B: ").is_ok() {
+            if write!(output, "{}", total).is_ok() {
+            }
+        }        
+        else {
+            output.clear();
+            output.push_str("Part B: Error ").ok();
         }
 
         output
     }
 }
 
-/// Helper function to calculate sum of absolute differences
-fn calculate_sum_of_abs_differences(pq1: &Vec<i32, 1000>, pq2: &Vec<i32, 1000>) -> i64 {
-    let mut total_diff: i64 = 0;
-
-    for (&num1, &num2) in pq1.iter().zip(pq2.iter()) {
-        total_diff += (num1 - num2).abs() as i64;
+fn calculate_sum_of_abs_differences(pq1: &mut BinaryHeap<i32,Min, 1000>, pq2: &mut BinaryHeap<i32,Min, 1000>) -> u64 {
+    let mut total_diff: u64 = 0;
+    while let (Some(num1), Some(num2)) = (pq1.pop(), pq2.pop()) {
+        let cur_diff = (num1 - num2).abs() as u64;
+        defmt::info!("Diff: {}", cur_diff);
+        total_diff += cur_diff;        
     }
-
     total_diff
 }
