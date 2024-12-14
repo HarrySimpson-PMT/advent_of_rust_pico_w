@@ -83,7 +83,6 @@ impl Solver for Day02 {
         let first_result = good_lines;
         let second_result = good_lines + almost_good_lines;
 
-        // Construct output
         if output.push_str("Part A: ").is_ok() {
             write!(output, "{} ", first_result).ok();
         } else {

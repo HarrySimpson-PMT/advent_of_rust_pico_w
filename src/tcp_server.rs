@@ -35,7 +35,6 @@ impl<'a> TcpServer<'a> {
         let mut header_buf = [0; 16];
         let mut accumulated_data = String::<20000>::new();
     
-        // Read the header
         match socket.read(&mut header_buf).await {
             Ok(n) => {
                 if n == 0 {
@@ -87,7 +86,6 @@ impl<'a> TcpServer<'a> {
                 }    
     
                 let response = handler(&accumulated_data);
-                //write response
 
                 match socket.write_all(response.as_bytes()).await {
                     Ok(()) => {

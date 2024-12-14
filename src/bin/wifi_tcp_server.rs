@@ -250,7 +250,7 @@ async fn main(spawner: Spawner) {
                             } else {
                                 info!(
                                     "Received line {}/{}: {}",
-                                    received + 1, // Increment after successfully pushing
+                                    received + 1, 
                                     expected_lines,
                                     command
                                 );

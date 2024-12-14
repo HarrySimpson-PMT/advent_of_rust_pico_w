@@ -166,10 +166,8 @@ async fn main(spawner: Spawner) {
             .listen(1234, |input| {
                 info!("Handling input: {:?}", input);
     
-                // Use the Day01 solver
-                let result = advent_of_rust_pico_w::aoc2024::day02::Day02::solve(input);
+                let result = advent_of_rust_pico_w::aoc2024::day03::Day03::solve(input);
     
-                // Log and return the response
                 info!("Solver result: {:?}", result);
                 result
             })
@@ -178,7 +176,6 @@ async fn main(spawner: Spawner) {
             warn!("Listener encountered an error: {:?}", e);
         }
     
-        // Add a small delay to avoid rapid retries in case of persistent errors
         embassy_time::Timer::after(Duration::from_secs(1)).await;
     
         info!("Restarting listener...");
