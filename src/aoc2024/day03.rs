@@ -14,19 +14,18 @@ impl Solver for Day03 {
         let mut result_b: u64 = 0;
         let mut on = true;
 
-        // Process the content for both parts
         let mut start = 0;
         while let Some(pos) = input[start..].find(|c: char| c == 'm' || c == 'd') {
             let offset = start + pos;
 
             if input[offset..].starts_with("do()") {
                 on = true;
-                start = offset + 4; // Move past "do()"
+                start = offset + 4; 
                 continue;
             }
             if input[offset..].starts_with("don't()") {
                 on = false;
-                start = offset + 7; // Move past "don't()"
+                start = offset + 7;
                 continue;
             }
 
@@ -51,7 +50,6 @@ impl Solver for Day03 {
             start += 1;
         }
 
-        // Format the output
         if output.push_str("Part A: ").is_ok() {
             if write!(output, "{} ", result_a).is_ok() {}
         } else {
@@ -73,24 +71,19 @@ fn parse_mul(input: &str) -> Option<(i32, i32)> {
         return None;
     }
 
-    // Extract the content inside the parentheses
-    let content = &input[4..input.len() - 1]; // Remove "mul(" and ")"
+    let content = &input[4..input.len() - 1]; 
     
-    // Ensure the content contains exactly one comma
     if content.matches(',').count() != 1 {
         return None;
     }
 
     let mut parts = content.split(',');
 
-    // Extract the two parts
     if let (Some(first), Some(second)) = (parts.next(), parts.next()) {
-        // Check if each part is numeric and at most 6 digits
         if first.len() > 3 || second.len() > 3 || !first.chars().all(|c| c.is_digit(10)) || !second.chars().all(|c| c.is_digit(10)) {
             return None;
         }
 
-        // Parse the numbers
         if let (Ok(a), Ok(b)) = (str_to_i32(first), str_to_i32(second)) {
             return Some((a, b));
         }
@@ -100,7 +93,6 @@ fn parse_mul(input: &str) -> Option<(i32, i32)> {
 }
 
 
-// Custom integer parser
 fn str_to_i32(s: &str) -> Result<i32, ()> {
     let mut result = 0;
     let mut negative = false;
@@ -113,7 +105,7 @@ fn str_to_i32(s: &str) -> Result<i32, ()> {
         if let Some(digit) = c.to_digit(10) {
             result = result * 10 + digit as i32;
         } else {
-            return Err(()); // Invalid character
+            return Err(()); 
         }
     }
 
