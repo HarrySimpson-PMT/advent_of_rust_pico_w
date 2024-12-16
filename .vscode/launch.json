@@ -20,7 +20,7 @@
                 {
                     "coreIndex": 0,
                     "rttEnabled": true,
-                    "programBinary": "./target/thumbv6m-none-eabi/debug/wifi_tcp_server"
+                    "programBinary": "./target/thumbv6m-none-eabi/debug/aoc_2024"
                     
                 }
             ]

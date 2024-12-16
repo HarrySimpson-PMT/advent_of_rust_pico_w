@@ -1,7 +1,14 @@
 #!/bin/bash
 trap 'exit' INT
 
+
+#try to build and exit if it fails
 cargo build
+if [ $? -ne 0 ]; then
+    echo "Build failed"
+    exit 1
+fi
+
 
 clear
 
