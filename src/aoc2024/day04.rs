@@ -1,9 +1,6 @@
 use super::Solver;
 use core::{fmt::Write, str::FromStr};
-#[allow(unused_imports)]
-use heapless::{String, Vec, FnvIndexMap};
-#[allow(unused_imports)]
-use heapless::binary_heap::{BinaryHeap, Min};
+use heapless::{String, Vec};
 
 pub struct Day04;
 
@@ -158,6 +155,6 @@ fn find_pattern(matrix: &Vec<String<150>, 150>) -> usize {
             }
         }
     }
-    
+
     count
 }
