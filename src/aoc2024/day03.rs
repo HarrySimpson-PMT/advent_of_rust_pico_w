@@ -39,12 +39,12 @@ impl Solver for Day03 {
                         }
                         start = offset + end;
                     }else {
-                        start = offset + 4; // Move past "mul("
+                        start = offset + 4;
                     }
 
                     continue;
                 } else {
-                    break; // No closing parenthesis found
+                    break;
                 }
             }
             start += 1;

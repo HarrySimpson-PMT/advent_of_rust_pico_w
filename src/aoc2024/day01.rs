@@ -19,8 +19,6 @@ impl Solver for Day01 {
         let mut first_numbers: Vec<i32, 1000> = Vec::new();
         let mut second_number_counts: FnvIndexMap<i32, i32, 1024> = FnvIndexMap::new();
 
-
-        // Split input into lines
         let lines: Vec<&str, 1000> = input.split('\n').collect();
         defmt::info!("Lines: {}", lines.len());
         for line in lines {
