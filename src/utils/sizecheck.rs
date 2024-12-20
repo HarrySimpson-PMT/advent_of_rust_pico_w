@@ -3,8 +3,8 @@ use core::fmt::Write;
 use heapless::binary_heap::{BinaryHeap, Min};
 #[allow(unused_imports)]
 use heapless::{FnvIndexMap, String, Vec};
-pub struct sizecheck;
 
+#[allow(dead_code)]
 fn solve(input: &String<20000>) -> String<100> {
     let mut output = String::<100>::new();
 
