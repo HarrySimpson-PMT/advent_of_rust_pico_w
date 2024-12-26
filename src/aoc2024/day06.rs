@@ -29,14 +29,21 @@ impl Solver for Day06 {
         let mut result_a = 0;
         let mut result_b = 0;
         
-        let mut simulate = false; 
+        let mut simulate = true; 
         let mut sim_start_step = 0;
-        
+
         loop {
             let mut current_step = 0;
+            defmt::info!("Current step: {} simming: {}", current_step, simulate);
             if simulate {
                 visited.fill(false); 
                 simulate = false;
+                sim_start_step += 1;
+                for (y, line) in input.lines().enumerate() {
+                    for (x, c) in line.chars().enumerate() {
+                        grid[y * GRID_SIZE + x] = c as u8;
+                    }
+                }
             }else{
                 result_a = count_visited(&visited, GRID_SIZE); 
                 break;
@@ -54,6 +61,7 @@ impl Solver for Day06 {
                 let ny = y as isize + dy;
                 
                 if nx < 0 || ny < 0 || nx as usize >= GRID_SIZE || ny as usize >= GRID_SIZE {
+                    defmt::info!("Out of bounds at: {},{}", nx, ny);
                     break;
                 }
 
@@ -61,10 +69,9 @@ impl Solver for Day06 {
                 let ny = ny as usize;
 
                 if current_step == sim_start_step {
+                    defmt::info!("Simulating step: {}", current_step);
                     simulate = true;
-                    //set the nxny to #
                     grid[ny * GRID_SIZE + nx] = b'#';
-                    sim_start_step += 1;                    
                 }
 
                 let next_idx = ny * GRID_SIZE + nx;
@@ -74,6 +81,7 @@ impl Solver for Day06 {
                 } else {
                     if simulate {
                         if is_visited(&visited, nx, ny, dir as u8, GRID_SIZE) {
+                            defmt::info!("Found loop at: {},{}", nx, ny);
                             result_b += 1;
                             break; 
                         }
