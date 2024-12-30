@@ -17,13 +17,13 @@ impl<'a> TcpServer<'a> {
     pub async fn listen(
         &self,
         port: u16,
-        handler: impl Fn(&String<20000>) -> String<100>,
+        handler: impl Fn(&mut String<20000>) -> String<100>,
     ) -> Result<(), &'static str> {
         let mut rx_buffer = [0; 4096];
         let mut tx_buffer = [0; 4096];
         let mut socket = TcpSocket::new(*self.stack, &mut rx_buffer, &mut tx_buffer);
     
-        socket.set_timeout(Some(Duration::from_secs(10)));
+        socket.set_timeout(Some(Duration::from_secs(120)));
     
         if let Err(e) = socket.accept(port).await {
             warn!("accept error: {:?}", e);
@@ -85,7 +85,7 @@ impl<'a> TcpServer<'a> {
                     info!("Received {}/{} bytes.", total_received, expected_length);
                 }    
     
-                let response = handler(&accumulated_data);
+                let response = handler(&mut accumulated_data);
 
                 match socket.write_all(response.as_bytes()).await {
                     Ok(()) => {

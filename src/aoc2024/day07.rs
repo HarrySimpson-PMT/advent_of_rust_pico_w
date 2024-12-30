@@ -7,7 +7,7 @@ use heapless::binary_heap::{BinaryHeap, Min};
 pub struct Day07;
 
 impl Solver for Day07 {
-    fn solve(input: &String<20000>) -> String<100> {
+    fn solve(input: &mut String<20000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut first_result: String<50> = String::new();
         let mut second_result: String<50> = String::new();
