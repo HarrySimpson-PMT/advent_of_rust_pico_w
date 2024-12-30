@@ -76,6 +76,10 @@ impl Solver for Day06 {
 
                 if current_step == sim_start_step {
                     simulate = true;
+                    //check if the input positiong has been visited with an X
+                    if input.chars().nth(ny * (GRID_SIZE + 1) + nx).unwrap() == 'X' {
+                        break;
+                    }
                     grid[ny * GRID_SIZE + nx] = b'#';
                     simulate_loop_block_pos = (nx, ny);
                 }
@@ -110,7 +114,7 @@ impl Solver for Day06 {
 
             }
         }
-        
+
         for c in input.chars() {
             if c == 'X' {
                 result_a += 1;
