@@ -6,7 +6,7 @@ use heapless::FnvIndexMap;
 pub struct Day01;
 
 impl Solver for Day01 {
-    fn solve(input: &mut String<20000>) -> String<100> {
+    fn solve(input: &mut String<30000>) -> String<100> {
         let mut output = String::<100>::new();
 
         if input.is_empty() {

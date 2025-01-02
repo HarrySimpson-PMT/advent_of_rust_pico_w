@@ -6,7 +6,7 @@ use heapless::FnvIndexSet;
 pub struct Day06;
 
 impl Solver for Day06 {
-    fn solve(input: &mut String<20000>) -> String<100> {
+    fn solve(input: &mut String<30000>) -> String<100> {
         const GRID_SIZE: usize = 130;
         const MAX_VISITS: usize = 16900 * 4;
 
@@ -145,7 +145,7 @@ impl Solver for Day06 {
     }
 }
 
-fn update_input_in_place(input: &mut String<20000>, x: usize, y: usize, new_char: char, grid_size: usize) {
+fn update_input_in_place(input: &mut String<30000>, x: usize, y: usize, new_char: char, grid_size: usize) {
     assert!(new_char.len_utf8() == 1, "Only single-byte characters are allowed");
     let index = y * (grid_size + 1) + x; // Account for newline
     unsafe {

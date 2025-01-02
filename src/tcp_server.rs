@@ -17,7 +17,7 @@ impl<'a> TcpServer<'a> {
     pub async fn listen(
         &self,
         port: u16,
-        handler: impl Fn(&mut String<20000>) -> String<100>,
+        handler: impl Fn(&mut String<30000>) -> String<100>,
     ) -> Result<(), &'static str> {
         let mut rx_buffer = [0; 4096];
         let mut tx_buffer = [0; 4096];
@@ -33,7 +33,7 @@ impl<'a> TcpServer<'a> {
         info!("Connection established with {:?}", socket.remote_endpoint());
     
         let mut header_buf = [0; 16];
-        let mut accumulated_data = String::<20000>::new();
+        let mut accumulated_data = String::<30000>::new();
     
         match socket.read(&mut header_buf).await {
             Ok(n) => {
@@ -51,8 +51,8 @@ impl<'a> TcpServer<'a> {
                     }
                 };
     
-                if expected_length > 20000 {
-                    warn!("Message length exceeds maximum capacity.");
+                if expected_length > 30000 {
+                    warn!("Message length exceeds maximum capacity. Length: {}", expected_length);
                     return Err("Message too large");
                 }
     
@@ -86,6 +86,8 @@ impl<'a> TcpServer<'a> {
                 }    
     
                 let response = handler(&mut accumulated_data);
+
+                info!("Sending response");
 
                 match socket.write_all(response.as_bytes()).await {
                     Ok(()) => {

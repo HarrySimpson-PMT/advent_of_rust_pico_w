@@ -1,5 +1,5 @@
 pub trait Solver {
-    fn solve(input: &mut heapless::String<20000>) -> heapless::String<100>;
+    fn solve(input: &mut heapless::String<30000>) -> heapless::String<100>;
 }
 pub mod day01;
 pub mod day02;
@@ -8,3 +8,4 @@ pub mod day04;
 pub mod day05;
 pub mod day06;
 pub mod day07;
+pub mod day08;

@@ -5,7 +5,7 @@ use heapless::{FnvIndexMap, String, Vec};
 pub struct Day05;
 
 impl Solver for Day05 {
-    fn solve(input: &mut String<20000>) -> String<100> {
+    fn solve(input: &mut String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut first_result: String<50> = String::new();
         let mut second_result: String<50> = String::new();
