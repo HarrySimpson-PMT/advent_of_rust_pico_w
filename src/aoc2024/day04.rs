@@ -1,4 +1,4 @@
-use super::Solver;
+use crate::solver::Solver;
 use core::{fmt::Write, str::FromStr};
 use heapless::{String, Vec};
 

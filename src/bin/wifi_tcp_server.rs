@@ -14,7 +14,7 @@ use heapless::String;
 use heapless::Vec;
 
 use cyw43::JoinOptions;
-use cyw43_pio::PioSpi;
+use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
 use defmt::*;
 use embassy_executor::Spawner;
 use embassy_net::tcp::TcpSocket;
@@ -76,6 +76,7 @@ async fn main(spawner: Spawner) {
     let spi = PioSpi::new(
         &mut pio.common,
         pio.sm0,
+        DEFAULT_CLOCK_DIVIDER,
         pio.irq0,
         cs,
         p.PIN_24,
@@ -86,7 +87,7 @@ async fn main(spawner: Spawner) {
     static STATE: StaticCell<cyw43::State> = StaticCell::new();
     let state = STATE.init(cyw43::State::new());
     let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
-    unwrap!(spawner.spawn(cyw43_task(runner)));
+    spawner.spawn(unwrap!(cyw43_task(runner)));
 
     control.init(clm).await;
     control.leave().await;
@@ -116,37 +117,22 @@ async fn main(spawner: Spawner) {
         seed,
     );
 
-    unwrap!(spawner.spawn(net_task(runner)));
+    spawner.spawn(unwrap!(net_task(runner)));
 
-    loop {
-        control.gpio_set(0, true).await;
-        match control
-            .join(WIFI_NETWORK, JoinOptions::new(WIFI_PASSWORD.as_bytes()))
-            .await
-        {
-            Ok(_) => break,
-            Err(err) => {
-                info!("join failed with status={}", err.status);
-                control.gpio_set(0, false).await;
-            }
-        }
+    while let Err(err) = control
+        .join(WIFI_NETWORK, JoinOptions::new(WIFI_PASSWORD.as_bytes()))
+        .await
+    {
+        info!("join failed with status={}", err.status);
     }
 
-    // Wait for DHCP, not necessary when using static IP
+    info!("waiting for link...");
+    stack.wait_link_up().await;
+
     info!("waiting for DHCP...");
-    while !stack.is_config_up() {
-        Timer::after_millis(100).await;
-    }
-    info!("DHCP is now up!");
-
-    info!("waiting for link up...");
-    while !stack.is_link_up() {
-        Timer::after_millis(500).await;
-    }
-    info!("Link is up!");
-
-    info!("waiting for stack to be up...");
     stack.wait_config_up().await;
+
+    // And now we can use it!
     info!("Stack is up!");
 
     info!(

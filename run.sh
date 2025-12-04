@@ -1,23 +1,22 @@
-#!/bin/bash
-trap 'exit' INT
+#!/usr/bin/env bash
+set -euo pipefail
+trap 'echo -e "\n[!] Aborted by user"; exit 130' INT
 
+BIN="${1:-aoc_2025}"
+TRIPLE="thumbv6m-none-eabi"
+PROFILE="debug"
 
-#try to build and exit if it fails
-cargo build
-if [ $? -ne 0 ]; then
-    echo "Build failed"
-    exit 1
-fi
+echo "[1/4] Building ${BIN} (${PROFILE})..."
+cargo build --bin "${BIN}" --target "${TRIPLE}" ${PROFILE:+--release}
 
+LOCAL_BIN="./target/${TRIPLE}/${PROFILE}/${BIN}"
 
-clear
+echo "[2/4] Deploying → Peregrinus..."
+scp "${LOCAL_BIN}" harry@10.0.0.86:/home/harry/pico_deployment/"${BIN}"
 
-# Run the code on the board
-probe-rs reset --chip rp2040 --protocol swd
+echo "[3/4] Reset + flash + run – full interactive TTY, progress bars, defmt, zero bullshit"
+ssh -t -t harry@10.0.0.86 \
+  env PATH="/home/harry/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  probe-rs run --chip RP2040 --allow-erase-all "/home/harry/pico_deployment/${BIN}"
 
-sleep 2
-
-probe-rs run --chip RP2040 --allow-erase-all ./target/thumbv6m-none-eabi/debug/aoc_2024
-# probe-rs run --chip RP2040 target/thumbv6m-none-eabi/debug/wifi_tcp_server -- moved from the build folder to the deployment folder.
-# ./scripts/run.sh -This is to run
-# chmod +x myscript.sh -This is to make executable
+echo "Done – back on cogito."

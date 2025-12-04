@@ -34,6 +34,7 @@ impl<'a> TcpServer<'a> {
     
         let mut header_buf = [0; 16];
         let mut accumulated_data = String::<30000>::new();
+        
     
         match socket.read(&mut header_buf).await {
             Ok(n) => {
@@ -43,6 +44,7 @@ impl<'a> TcpServer<'a> {
                 }
     
                 let header = core::str::from_utf8(&header_buf[..n]).unwrap_or("");
+                info!("Received header: {:?}", header);
                 let expected_length = match header.strip_prefix("LEN:") {
                     Some(len_str) => len_str.trim().parse::<usize>().unwrap_or(0),
                     None => {
@@ -84,9 +86,9 @@ impl<'a> TcpServer<'a> {
                     total_received += n;
                     info!("Received {}/{} bytes.", total_received, expected_length);
                 }    
+                info!("Full message received. Processing...");
     
                 let response = handler(&mut accumulated_data);
-
                 info!("Sending response");
 
                 match socket.write_all(response.as_bytes()).await {

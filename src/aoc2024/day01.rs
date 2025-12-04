@@ -1,4 +1,4 @@
-use super::Solver;
+use crate::solver::Solver;
 use heapless::{String, Vec};
 use heapless::binary_heap::{BinaryHeap, Min};
 use heapless::FnvIndexMap;

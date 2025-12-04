@@ -1,4 +1,4 @@
-use super::Solver;
+use crate::solver::Solver;
 use core::fmt::Write;
 #[allow(unused_imports)]
 use heapless::binary_heap::{BinaryHeap, Min};
