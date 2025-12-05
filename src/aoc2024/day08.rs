@@ -1,8 +1,7 @@
 use crate::solver::Solver;
-use core::{fmt::Write, num};
+use core::{fmt::Write};
 #[allow(unused_imports)]
 use heapless::binary_heap::{BinaryHeap, Min};
-use heapless::FnvIndexSet;
 #[allow(unused_imports)]
 use heapless::{FnvIndexMap, String, Vec};
 pub struct Day08;
@@ -17,7 +16,7 @@ impl Solver for Day08 {
             return output;
         }
         let mut grid = [[0u8; 50]; 50];
-        let mut result_grid = [[false; 50]; 50];
+        let mut _result_grid = [[false; 50]; 50];
 
         let mut dictionary = FnvIndexMap::<u8, Vec<(u8, u8), 5>, 64>::new();
         fn char_to_value(c: char) -> Option<u8> {
@@ -31,7 +30,7 @@ impl Solver for Day08 {
                 None
             }
         }
-        fn value_to_char(v: u8) -> Option<char> {
+        fn _value_to_char(v: u8) -> Option<char> {
             match v {
                 0..=9 => Some((b'0' + v) as char),      
                 10..=35 => Some((b'A' + (v - 10)) as char),  
@@ -45,9 +44,8 @@ impl Solver for Day08 {
         for (i, c) in input.char_indices() {
             if c == '\n' {
                 let line = &input[start..i];
-                for (j, c) in line.chars().enumerate() {
+                for (_j, c) in line.chars().enumerate() {
                     if c.is_alphanumeric() {
-                        //set numeric to 0-9 and aplha to 10-35
                         let num = char_to_value(c).unwrap();
 
                         if let Some(values) = dictionary.get_mut(&num) {

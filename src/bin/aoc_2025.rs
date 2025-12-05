@@ -14,6 +14,7 @@ use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
+use embassy_sync::waitqueue::AtomicWaker;
 use embassy_time::{Duration, Timer};
 use rand::RngCore;
 use static_cell::StaticCell;
@@ -51,18 +52,8 @@ async fn main(spawner: Spawner) {
     let fw = include_bytes!("../../firmware/43439A0.bin");
     let clm = include_bytes!("../../firmware/43439A0_clm.bin");
 
-    let mut pwr = Output::new(p.PIN_23, Level::Low);
-    let mut cs = Output::new(p.PIN_25, Level::High);
-
-    pwr.set_low();
-    Timer::after_millis(10).await;
-    pwr.set_high();
-    Timer::after_millis(50).await;
-    cs.set_low();
-    Timer::after_millis(1).await;
-    cs.set_high();
-    Timer::after_millis(10).await;
-
+    let pwr = Output::new(p.PIN_23, Level::Low);
+    let cs = Output::new(p.PIN_25, Level::High);
     let mut pio = Pio::new(p.PIO0, Irqs);
     let spi = PioSpi::new(
         &mut pio.common,
@@ -82,8 +73,10 @@ async fn main(spawner: Spawner) {
 
     control.init(clm).await;
     control
-        .set_power_management(cyw43::PowerManagementMode::PowerSave)
+        .set_power_management(cyw43::PowerManagementMode::None)
         .await;
+
+    Timer::after(Duration::from_millis(500)).await;
 
     let config = Config::dhcpv4(Default::default());
 
@@ -99,49 +92,29 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(unwrap!(net_task(runner)));
 
-    let net_up = embassy_time::with_timeout(Duration::from_secs(5), async {
-        while let Err(err) = control
-            .join(WIFI_NETWORK, JoinOptions::new(WIFI_PASSWORD.as_bytes()))
-            .await
-        {
-            info!("join failed with status={}", err.status);
-        }
+    let options = JoinOptions::default();
 
-        info!("waiting for link...");
-        stack.wait_link_up().await;
 
-        info!("Waiting for DHCP lease...");
-        let dhcp_ok = embassy_time::with_timeout(Duration::from_secs(20), async {
-            while !stack.is_config_up() {
-                Timer::after_millis(1000).await;
-            }
-            Ok::<(), ()>(())
-        })
+    while let Err(err) = control
+        .join(WIFI_NETWORK, JoinOptions::new(WIFI_PASSWORD.as_bytes()))
         .await
-        .is_ok();
-
-        if !dhcp_ok {
-            warn!("DHCP timeout");
-            return Err(());
-        }
-
-        info!("Stack is up!");
-
-        info!(
-            "DHCP is now up! ip addr {}",
-            stack.config_v4().unwrap().address
-        );
-
-        Ok::<(), ()>(())
-    })
-    .await
-    .is_ok();
-
-    if !net_up {
-        warn!("Network timeout – restart device");
-        // Simplest recovery: full MCU reset (no stack state to clean)
-        cortex_m::peripheral::SCB::sys_reset();
+    {
+        info!("join failed with status={}", err.status);
     }
+
+    info!("waiting for link...");
+    stack.wait_link_up().await;
+
+    info!("waiting for DHCP...");
+    stack.wait_config_up().await;
+
+    // And now we can use it!
+    info!("Stack is up!");
+
+    info!(
+        "DHCP is now up! ip addr {}",
+        stack.config_v4().unwrap().address
+    );
 
     Timer::after(Duration::from_secs(1)).await;
 
