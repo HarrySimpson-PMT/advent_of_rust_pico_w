@@ -45,14 +45,6 @@ async fn main(spawner: Spawner) {
     info!("Hello World!");
 
     let p = embassy_rp::init(Default::default());
-    let mut test28 = Output::new(p.PIN_28, Level::High);
-    let mut test27 = Output::new(p.PIN_27, Level::High);
-    let mut test26 = Output::new(p.PIN_26, Level::High);
-    let mut test22 = Output::new(p.PIN_22, Level::High);
-    let mut test21 = Output::new(p.PIN_21, Level::High);
-    let mut test20 = Output::new(p.PIN_20, Level::High);
-    let mut test19 = Output::new(p.PIN_19, Level::High);
-    let mut test18 = Output::new(p.PIN_18, Level::High);
 
     let mut rng = RoscRng;
 
@@ -65,7 +57,7 @@ async fn main(spawner: Spawner) {
     //     probe-rs download 43439A0_clm.bin --binary-format bin --chip RP2040 --base-address 0x10140000
     let fw = unsafe { core::slice::from_raw_parts(0x10100000 as *const u8, 230321) };
     let clm = unsafe { core::slice::from_raw_parts(0x10140000 as *const u8, 4752) };
-    
+
     let pwr = Output::new(p.PIN_23, Level::Low);
     let cs = Output::new(p.PIN_25, Level::High);
     let mut pio = Pio::new(p.PIO0, Irqs);
@@ -88,20 +80,10 @@ async fn main(spawner: Spawner) {
     control.init(clm).await;
     control.leave().await;
     control
-        .set_power_management(cyw43::PowerManagementMode::PowerSave)
+        .set_power_management(cyw43::PowerManagementMode::None)
         .await;
 
     let config = Config::dhcpv4(Default::default());
-
-
-    test28.set_low();
-    test27.set_low();
-    test26.set_low();
-    test22.set_low();
-    test21.set_low();
-    test20.set_low();
-    test19.set_low();
-    test18.set_low();
 
     // Generate random seed
     let seed = rng.next_u64();
@@ -137,17 +119,7 @@ async fn main(spawner: Spawner) {
         "DHCP is now up! ip addr {}",
         stack.config_v4().unwrap().address
     );
-    test22.set_high();
-    //wait 2 seconds
     Timer::after(Duration::from_secs(1)).await;
-    test28.set_low();
-    test27.set_low();
-    test26.set_low();
-    test22.set_low();
-    test21.set_low();
-    test20.set_low();
-    test19.set_low();
-    test18.set_low();
   
     loop {
         let server = TcpServer::new(&stack);
