@@ -5,9 +5,9 @@ use heapless::binary_heap::{BinaryHeap, Min};
 #[allow(unused_imports)]
 use heapless::{FnvIndexMap, String, Vec};
 
-pub struct Day03;
+pub struct Day;
 
-impl Solver for Day03 {
+impl Solver for Day {
     fn solve(input: &mut String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut result_a: u64 = 0;

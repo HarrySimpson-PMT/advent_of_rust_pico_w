@@ -4,9 +4,9 @@ use core::{fmt::Write};
 use heapless::binary_heap::{BinaryHeap, Min};
 #[allow(unused_imports)]
 use heapless::{FnvIndexMap, String, Vec};
-pub struct Day08;
+pub struct Day;
 
-impl Solver for Day08 {
+impl Solver for Day {
     fn solve(input: &mut String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut first_result: String<50> = String::new();

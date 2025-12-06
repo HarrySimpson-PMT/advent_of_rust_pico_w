@@ -3,9 +3,9 @@ use core::fmt::Write;
 use heapless::String;
 use heapless::FnvIndexSet;
 
-pub struct Day06;
+pub struct Day;
 
-impl Solver for Day06 {
+impl Solver for Day {
     fn solve(input: &mut String<30000>) -> String<100> {
         const GRID_SIZE: usize = 130;
         const MAX_VISITS: usize = 16900 * 4;

@@ -14,9 +14,7 @@ use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
-use embassy_sync::waitqueue::AtomicWaker;
 use embassy_time::{Duration, Timer};
-use rand::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -49,8 +47,15 @@ async fn main(spawner: Spawner) {
 
     let mut rng = RoscRng;
 
-    let fw = include_bytes!("../../firmware/43439A0.bin");
-    let clm = include_bytes!("../../firmware/43439A0_clm.bin");
+    //let fw = include_bytes!("../../firmware/43439A0.bin");
+    //let clm = include_bytes!("../../firmware/43439A0_clm.bin");
+
+    // To make flashing faster for development, you may want to flash the firmwares independently
+    // at hardcoded addresses, instead of baking them into the program with `include_bytes!`:
+    //     probe-rs download 43439A0.bin --binary-format bin --chip RP2040 --base-address 0x10100000
+    //     probe-rs download 43439A0_clm.bin --binary-format bin --chip RP2040 --base-address 0x10140000
+    let fw = unsafe { core::slice::from_raw_parts(0x10100000 as *const u8, 230321) };
+    let clm = unsafe { core::slice::from_raw_parts(0x10140000 as *const u8, 4752) };
 
     let pwr = Output::new(p.PIN_23, Level::Low);
     let cs = Output::new(p.PIN_25, Level::High);
@@ -92,16 +97,13 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(unwrap!(net_task(runner)));
 
-    let options = JoinOptions::default();
-
-
     while let Err(err) = control
         .join(WIFI_NETWORK, JoinOptions::new(WIFI_PASSWORD.as_bytes()))
         .await
     {
         info!("join failed with status={}", err.status);
     }
-
+    
     info!("waiting for link...");
     stack.wait_link_up().await;
 
@@ -116,15 +118,13 @@ async fn main(spawner: Spawner) {
         stack.config_v4().unwrap().address
     );
 
-    Timer::after(Duration::from_secs(1)).await;
-
     loop {
         let server = TcpServer::new(&stack);
         if let Err(e) = server
             .listen(1234, |input| {
                 info!("Received input of length: {}", input.len());
 
-                let result = advent_of_rust_pico_w::aoc2025::day01::Day01::solve(input);
+                let result = advent_of_rust_pico_w::aoc2025::day02::Day::solve(input);
 
                 info!("Solver result: {:?}", result);
                 result

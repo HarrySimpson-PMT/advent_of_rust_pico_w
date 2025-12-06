@@ -22,6 +22,6 @@ scp "${LOCAL_BIN}" harry@10.0.0.86:/home/harry/pico_deployment/"${BIN}"
 echo "[3/4] Reset + flash + run – full interactive TTY, progress bars, defmt"
 ssh -t -t harry@10.0.0.86 \
   env PATH="/home/harry/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-  probe-rs run --chip RP2040 --allow-erase-all "/home/harry/pico_deployment/${BIN}"
+  probe-rs run --chip RP2040 "/home/harry/pico_deployment/${BIN}"
 
 echo "Done – back on cogito."

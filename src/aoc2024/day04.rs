@@ -2,9 +2,9 @@ use crate::solver::Solver;
 use core::{fmt::Write, str::FromStr};
 use heapless::{String, Vec};
 
-pub struct Day04;
+pub struct Day;
 
-impl Solver for Day04 {
+impl Solver for Day {
     fn solve(input: &mut String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut first_result: String<50> = String::new();

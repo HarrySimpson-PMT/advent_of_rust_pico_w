@@ -18,7 +18,6 @@ use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_time::Duration;
 use embedded_io_async::Write;
-use rand::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
@@ -74,7 +73,7 @@ async fn main(spawner: Spawner) {
 
     control.init(clm).await;
     control
-        .set_power_management(cyw43::PowerManagementMode::PowerSave)
+        .set_power_management(cyw43::PowerManagementMode::None)
         .await;
 
     // Use a link-local address for communication without DHCP server
