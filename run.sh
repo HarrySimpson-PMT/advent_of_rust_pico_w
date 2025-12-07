@@ -16,7 +16,7 @@ CARGO_PROFILE="debug"
 [[ "$PROFILE" == "release" ]] && CARGO_PROFILE="release"
 LOCAL_BIN="./target/${TRIPLE}/${CARGO_PROFILE}/${BIN}"
 
-echo "[2/4] Deploying → Peregrinus..."
+echo "[2/4] Deploying → Peregrinus. scp ${LOCAL_BIN} to pico_deployment/${BIN}"
 scp "${LOCAL_BIN}" harry@10.0.0.86:/home/harry/pico_deployment/"${BIN}"
 
 echo "[3/4] Reset + flash + run – full interactive TTY, progress bars, defmt"
