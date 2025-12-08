@@ -126,7 +126,7 @@ async fn main(spawner: Spawner) {
             .listen(1234, |input| {
                 info!("Received input of length: {}", input.len());
 
-                let result = advent_of_rust_pico_w::aoc2025::day03::Day::solve(input);
+                let result = advent_of_rust_pico_w::aoc2025::day04::Day::solve(input);
 
                 info!("Solver result: {:?}", result);
                 result
