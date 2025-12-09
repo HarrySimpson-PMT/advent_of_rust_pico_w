@@ -8,7 +8,7 @@ use heapless::{FnvIndexMap, String, Vec};
 pub struct Day;
 
 impl Solver for Day {
-    fn solve(input: &mut String<30000>) -> String<100> {
+    fn solve(input: String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut result_a: u64 = 0;
         let mut result_b: u64 = 0;

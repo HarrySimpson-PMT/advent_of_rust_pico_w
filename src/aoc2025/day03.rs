@@ -4,7 +4,7 @@ use heapless::{String, Vec};
 pub struct Day;
 
 impl Solver for Day {
-    fn solve(input: &mut String<30000>) -> String<100> {
+    fn solve(input: String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let mut result_a: i64 = 0;
         let mut result_b: i64 = 0;

@@ -5,7 +5,7 @@ use heapless::{String, Vec};
 pub struct Day01;
 
 impl Solver for Day01 {
-    fn solve(input: &mut String<30000>) -> String<100> {
+    fn solve(input: String<30000>) -> String<100> {
         info!("Solving Day01 with input length");
         let mut output = String::<100>::new();
         if input.is_empty() {

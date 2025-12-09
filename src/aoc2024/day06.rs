@@ -4,9 +4,9 @@ use heapless::String;
 use heapless::FnvIndexSet;
 
 pub struct Day;
-
+//conver to grid if you want to improve this method.
 impl Solver for Day {
-    fn solve(input: &mut String<30000>) -> String<100> {
+    fn solve(mut input: String<30000>) -> String<100> {
         const GRID_SIZE: usize = 130;
         const MAX_VISITS: usize = 16900 * 4;
 
@@ -29,7 +29,7 @@ impl Solver for Day {
                 }
             }
         }
-        update_input_in_place(input, cur_pos.0, cur_pos.1, 'X', GRID_SIZE);
+        input = update_input_in_place(input, cur_pos.0, cur_pos.1, 'X', GRID_SIZE);
 
         let mut result_a = 0;
         let mut result_b = 0;
@@ -100,7 +100,7 @@ impl Solver for Day {
                         }
                     }
                     if !simulate {
-                        update_input_in_place(input, nx, ny, 'X', GRID_SIZE);
+                        input = update_input_in_place(input, nx, ny, 'X', GRID_SIZE);
                     }
                     x = nx;
                     y = ny;
@@ -145,17 +145,22 @@ impl Solver for Day {
     }
 }
 
-fn update_input_in_place(input: &mut String<30000>, x: usize, y: usize, new_char: char, grid_size: usize) {
-    assert!(new_char.len_utf8() == 1, "Only single-byte characters are allowed");
-    let index = y * (grid_size + 1) + x; // Account for newline
-    unsafe {
-        let bytes = input.as_bytes_mut(); // Get mutable byte slice
-        if bytes[index] != b'\n' {
-            bytes[index] = new_char as u8; // Update the character
-        } else {
-            panic!("Attempted to modify a newline character!");
-        }
-    }
+fn update_input_in_place(input: String<30000>, x: usize, y: usize, new_char: char, grid_size: usize) -> String<30000> {
+    let index = y * (grid_size + 1) + x; 
+    let mut bytes = input.into_bytes();
+    bytes[index] = new_char as u8; // Update the character
+
+
+    // assert!(new_char.len_utf8() == 1, "Only single-byte characters are allowed");
+    // unsafe {
+    //     let bytes = input.as_bytes_mut(); // Get mutable byte slice
+    //     if bytes[index] != b'\n' {
+    //         bytes[index] = new_char as u8; // Update the character
+    //     } else {
+    //         panic!("Attempted to modify a newline character!");
+    //     }
+    // }
+    String::from_utf8(bytes).unwrap_or_else(|_| String::<30000>::new())
 }
 
 fn encode_position(x: usize, y: usize, dir: u8, width: usize) -> u32 {

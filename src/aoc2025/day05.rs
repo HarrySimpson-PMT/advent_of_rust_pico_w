@@ -10,7 +10,7 @@ struct Range {
 }
 
 impl Solver for Day {
-    fn solve(input: &mut String<30000>) -> String<100> {
+    fn solve(input: String<30000>) -> String<100> {
         let mut output = String::<100>::new();
         let lines: Vec<&str, 5000> = input.split('\n').collect();
         let mut result_a: i64 = 0;

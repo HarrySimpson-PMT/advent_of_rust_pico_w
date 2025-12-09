@@ -17,7 +17,7 @@ impl<'a> TcpServer<'a> {
     pub async fn listen(
         &self,
         port: u16,
-        handler: impl Fn(&mut String<30000>) -> String<100>,
+        handler: impl Fn(String<30000>) -> String<100>,
     ) -> Result<(), &'static str> {
         let mut rx_buffer = [0; 4096];
         let mut tx_buffer = [0; 4096];
@@ -88,7 +88,7 @@ impl<'a> TcpServer<'a> {
                 }    
                 info!("Full message received. Processing...");
     
-                let response = handler(&mut accumulated_data);
+                let response = handler(accumulated_data);
                 info!("Sending response");
 
                 match socket.write_all(response.as_bytes()).await {
