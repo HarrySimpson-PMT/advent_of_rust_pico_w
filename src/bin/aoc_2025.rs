@@ -18,6 +18,7 @@ use embassy_time::{Duration, Timer};
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
+
 // pub const WIFI_NETWORK: &str = "";
 // pub const WIFI_PASSWORD: &str = "";
 include!(concat!(
