@@ -16,7 +16,6 @@ impl Solver for Day {
         let mut result_a: i64 = 0;
         let mut result_b: u64 = 0;
 
-
         let mut split_index = 0;
         for (i, line) in lines.iter().enumerate() {
             if line.trim().is_empty() {
@@ -24,7 +23,29 @@ impl Solver for Day {
                 break;
             }
         }
-        let (range_strings, _) = lines.split_at(split_index);
+        let (range_strings, id_strings) = lines.split_at(split_index);
+        let mut ids: Vec<u64, 1000> = Vec::new();
+        for id_str in id_strings {
+            if id_str.trim().is_empty() {
+                continue;
+            }
+            let id = id_str.trim().parse().unwrap();
+            let _  = ids.push(id);
+        }
+        for id in ids {
+            for range_str in range_strings {
+                let parts: Vec<&str,2> = range_str.split('-').collect();
+                if parts.len() != 2 {
+                    continue;
+                }
+                let start: u64 = parts[0].trim().parse().unwrap();
+                let end: u64 = parts[1].trim().parse().unwrap();
+                if id >= start && id <= end {
+                    result_a += 1;
+                    break;
+                }
+            }
+        }
         let mut ranges: Vec<Range, 1000> = Vec::new();
         for range_str in range_strings {
             if range_str.trim().is_empty() {
@@ -36,17 +57,14 @@ impl Solver for Day {
             }
             let start: u64 = parts[0].trim().parse().unwrap();
             let end: u64 = parts[1].trim().parse().unwrap();
-            ranges.push(Range { start, end });
+            let _ = ranges.push(Range { start, end });
         }
         ranges.sort_unstable_by(|a, b| a.start.cmp(&b.start));
-
-        //no std sort
-
 
         let mut collapsed_ranges: Vec<Range, 100> = Vec::new();
         for range in ranges {
             if collapsed_ranges.is_empty() {
-                collapsed_ranges.push(range);
+                let _ = collapsed_ranges.push(range);
             } else {
                 let last_range = collapsed_ranges.last_mut().unwrap();
                 if range.start <= last_range.end + 1 {
@@ -54,7 +72,7 @@ impl Solver for Day {
                         last_range.end = range.end;
                     }
                 } else {
-                    collapsed_ranges.push(range);
+                    let _ = collapsed_ranges.push(range);
                 }
             }
         }
