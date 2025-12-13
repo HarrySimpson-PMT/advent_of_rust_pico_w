@@ -4,12 +4,6 @@ use heapless::{FnvIndexMap, FnvIndexSet, String, Vec};
 
 pub struct Day;
 
-#[derive(Debug, Clone, PartialEq, Eq)] // Add traits as needed for your use case
-struct Range {
-    start: u64,
-    end: u64,
-}
-
 impl Solver for Day {
     fn solve(input: String<30000>) -> String<100> {
         let mut output = String::<100>::new();

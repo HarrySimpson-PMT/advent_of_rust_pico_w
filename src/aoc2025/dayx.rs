@@ -12,6 +12,7 @@ struct Range {
 
 impl Solver for Day {
     fn solve(input: String<30000>) -> String<100> {
+        defmt::info!("Solving Day x...");
         let mut output = String::<100>::new();
         let mut result_a: u64 = 0;
         let mut result_b: u64 = 0;
